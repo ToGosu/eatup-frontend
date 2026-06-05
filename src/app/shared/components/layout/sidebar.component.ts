@@ -1,18 +1,13 @@
-import { Component, input, output, signal, inject } from '@angular/core';
+import { Component, input, output, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { filter, Subscription } from 'rxjs';
 
-interface Feature {
-  name: string;
-  path: string;
-}
-
-interface Module {
-  name: string;
-  expanded: boolean;
-  features: Feature[];
-}
+import {
+  NAVIGATION_MODULES,
+  NavigationModule,
+} from '@shared/config/navigation.config';
 
 @Component({
   selector: 'app-sidebar',
@@ -422,55 +417,47 @@ interface Module {
     }
   `]
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
+  private routerSubscription?: Subscription;
+
   isCollapsed = input<boolean>(false);
   toggleCollapse = output<void>();
 
-  protected readonly modules = signal<Module[]>([
-    {
-      name: 'Payment',
-      expanded: false,
-      features: [
-        { name: 'Cash Receipt',   path: '/payment/cashreceipt' },
-        { name: 'Facturas',       path: '/payment/invoice' },
-        { name: 'Payment Method', path: '/payment/paymentmethod' }
-      ]
-    },
-    {
-      name: 'Commercial',
-      expanded: false,
-      features: [
-        { name: 'Descuentos', path: '/commercial/discount' },
-        { name: 'Descuentos por Cliente', path: '/commercial/customer-discount' },
-        { name: 'Clientes', path: '/commercial/clients' },
-        { name: 'Vendedores', path: '/commercial/seller' },
-        { name: 'Compras',    path: '/commercial/purchases' },
-        { name: 'Proveedores', path: '/commercial/provider' },
-        { name: 'Mesas',      path: '/commercial/tables' },
-        { name: 'Ventas',     path: '/commercial/sales' }
-      ]
-    },
-    {
-      name: 'Inventory',
-      expanded: true,
-      features: [
-        { name: 'Transfer',   path: '/inventory/transfer'   },
-        { name: 'Categorías', path: '/inventory/categories' },
-        { name: 'Productos',  path: '/inventory/product'    },
-        { name: 'Recetas',    path: '/inventory/recipes'    },
-        { name: 'Sedes',      path: '/inventor/locations' }
-      ]
-    }
-  ]);
+  protected readonly modules = signal<NavigationModule[]>(
+    NAVIGATION_MODULES.map((module) => ({ ...module, features: [...module.features] })),
+  );
+
+  ngOnInit(): void {
+    this.expandModuleForUrl(this.router.url);
+    this.routerSubscription = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => this.expandModuleForUrl(event.urlAfterRedirects));
+  }
+
+  ngOnDestroy(): void {
+    this.routerSubscription?.unsubscribe();
+  }
 
   toggleModule(moduleName: string): void {
     if (this.isCollapsed()) {
       this.toggleCollapse.emit();
     }
-    this.modules.update(mods => mods.map(m =>
-      m.name === moduleName ? { ...m, expanded: !m.expanded } : m
-    ));
+    this.modules.update((mods) =>
+      mods.map((m) => (m.name === moduleName ? { ...m, expanded: !m.expanded } : m)),
+    );
+  }
+
+  private expandModuleForUrl(url: string): void {
+    this.modules.update((mods) =>
+      mods.map((module) => ({
+        ...module,
+        expanded:
+          module.expanded ||
+          module.features.some((feature) => url.startsWith(feature.path)),
+      })),
+    );
   }
 
   // Dictionary of SVG icons for modules returning SafeHtml
