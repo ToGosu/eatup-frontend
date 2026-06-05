@@ -5,9 +5,10 @@
     "ng": "ng",
     "prestart": "node scripts/generate-env.js",
     "start": "ng serve --proxy-config proxy.conf.json",
-    "prebuild": "node scripts/generate-env.js",
-
+    "generate-env": "node scripts/generate-env.js",
+    "generate-env:prod": "node scripts/generate-env.js --production",
     "build": "ng build",
+    "build:production": "node scripts/generate-env.js --production && ng build --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
