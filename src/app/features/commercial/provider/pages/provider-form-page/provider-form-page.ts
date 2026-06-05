@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -65,27 +65,27 @@ export class ProviderFormPage implements OnInit {
 
   protected readonly documentTypes: CatalogOption[] = [
     { id: 1, label: 'NIT', shortLabel: 'NIT' },
-    { id: 2, label: 'Cédula de ciudadanía', shortLabel: 'CC' },
-    { id: 3, label: 'Cédula de extranjería', shortLabel: 'CE' },
+    { id: 2, label: 'Cdula de ciudadana', shortLabel: 'CC' },
+    { id: 3, label: 'Cdula de extranjera', shortLabel: 'CE' },
     { id: 4, label: 'Pasaporte', shortLabel: 'PP' },
   ];
 
   protected readonly taxRegimes: CatalogOption[] = [
-    { id: 1, label: 'Régimen común' },
-    { id: 2, label: 'Régimen simplificado' },
+    { id: 1, label: 'Rgimen comn' },
+    { id: 2, label: 'Rgimen simplificado' },
     { id: 3, label: 'No responsable de IVA' },
   ];
 
   protected readonly departments: CatalogOption[] = [
-    { id: 11, label: 'Bogotá D.C.' },
+    { id: 11, label: 'Bogot D.C.' },
     { id: 5, label: 'Antioquia' },
     { id: 76, label: 'Valle del Cauca' },
-    { id: 8, label: 'Atlántico' },
+    { id: 8, label: 'Atlntico' },
   ];
 
   protected readonly cities: CityOption[] = [
-    { id: 11001, label: 'Bogotá', departmentId: 11 },
-    { id: 5001, label: 'Medellín', departmentId: 5 },
+    { id: 11001, label: 'Bogot', departmentId: 11 },
+    { id: 5001, label: 'Medelln', departmentId: 5 },
     { id: 76001, label: 'Cali', departmentId: 76 },
     { id: 8001, label: 'Barranquilla', departmentId: 8 },
   ];
@@ -207,7 +207,7 @@ export class ProviderFormPage implements OnInit {
     }
 
     if (controlName === 'documentNumber') {
-      return 'El documento debe tener entre 6 y 20 dígitos.';
+      return 'El documento debe tener entre 6 y 20 dgitos.';
     }
 
     if (controlName === 'responsibleFirstName' || controlName === 'responsibleLastName') {
@@ -218,18 +218,18 @@ export class ProviderFormPage implements OnInit {
     }
 
     if (controlName === 'phone') {
-      return 'El teléfono debe tener exactamente 10 dígitos.';
+      return 'El telfono debe tener exactamente 10 dgitos.';
     }
 
     if (controlName === 'email') {
-      return 'Ingresa un correo electrónico válido.';
+      return 'Ingresa un correo electrnico vlido.';
     }
 
     if (controlName === 'address' && control.hasError('maxlength')) {
       return 'No puede superar 200 caracteres.';
     }
 
-    return 'Campo no válido.';
+    return 'Campo no vlido.';
   }
 
   protected hasUnknownDocumentType(): boolean {
@@ -299,3 +299,4 @@ export class ProviderFormPage implements OnInit {
     };
   }
 }
+
