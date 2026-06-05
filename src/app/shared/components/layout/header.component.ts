@@ -288,6 +288,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
       'customer-discount': 'Descuentos por Cliente',
       'seller': 'Vendedores',
       'purchases': 'Compras',
+      'provider': 'Proveedores',
+      'clients': 'Clientes',
       'tables': 'Mesas',
       'sales': 'Ventas',
       'inventory': 'Inventory',

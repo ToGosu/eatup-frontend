@@ -1,18 +1,13 @@
-import { Component, input, output, signal, inject } from '@angular/core';
+import { Component, input, output, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { filter, Subscription } from 'rxjs';
 
-interface Feature {
-  name: string;
-  path: string;
-}
-
-interface Module {
-  name: string;
-  expanded: boolean;
-  features: Feature[];
-}
+import {
+  NAVIGATION_MODULES,
+  NavigationModule,
+} from '@shared/config/navigation.config';
 
 @Component({
   selector: 'app-sidebar',
@@ -422,54 +417,47 @@ interface Module {
     }
   `]
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
+  private routerSubscription?: Subscription;
+
   isCollapsed = input<boolean>(false);
   toggleCollapse = output<void>();
 
-  protected readonly modules = signal<Module[]>([
-    {
-      name: 'Payment',
-      expanded: false,
-      features: [
-        { name: 'Cash Receipt',   path: '/payment/cashreceipt' },
-        { name: 'Facturas',       path: '/payment/invoice' },
-        { name: 'Payment Method', path: '/payment/paymentmethod' }
-      ]
-    },
-    {
-      name: 'Commercial',
-      expanded: false,
-      features: [
-        { name: 'Descuentos', path: '/commercial/discount' },
-        { name: 'Descuentos por Cliente', path: '/commercial/customer-discount' },
-        { name: 'Clientes', path: '/commercial/clients' },
-        { name: 'Vendedores', path: '/commercial/seller' },
-        { name: 'Compras',    path: '/commercial/purchases' },
-        { name: 'Mesas',      path: '/commercial/tables' },
-        { name: 'Ventas',     path: '/commercial/sales' }
-      ]
-    },
-    {
-      name: 'Inventory',
-      expanded: true,
-      features: [
-        { name: 'Transfer',   path: '/inventory/transfer'   },
-        { name: 'Categorías', path: '/inventory/categories' },
-        { name: 'Productos',  path: '/inventory/product'    },
-        { name: 'Recetas',    path: '/inventory/recipes'    },
-        { name: 'Sedes',      path: '/inventor/locations' }
-      ]
-    }
-  ]);
+  protected readonly modules = signal<NavigationModule[]>(
+    NAVIGATION_MODULES.map((module) => ({ ...module, features: [...module.features] })),
+  );
+
+  ngOnInit(): void {
+    this.expandModuleForUrl(this.router.url);
+    this.routerSubscription = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => this.expandModuleForUrl(event.urlAfterRedirects));
+  }
+
+  ngOnDestroy(): void {
+    this.routerSubscription?.unsubscribe();
+  }
 
   toggleModule(moduleName: string): void {
     if (this.isCollapsed()) {
       this.toggleCollapse.emit();
     }
-    this.modules.update(mods => mods.map(m =>
-      m.name === moduleName ? { ...m, expanded: !m.expanded } : m
-    ));
+    this.modules.update((mods) =>
+      mods.map((m) => (m.name === moduleName ? { ...m, expanded: !m.expanded } : m)),
+    );
+  }
+
+  private expandModuleForUrl(url: string): void {
+    this.modules.update((mods) =>
+      mods.map((module) => ({
+        ...module,
+        expanded:
+          module.expanded ||
+          module.features.some((feature) => url.startsWith(feature.path)),
+      })),
+    );
   }
 
   // Dictionary of SVG icons for modules returning SafeHtml
@@ -517,6 +505,8 @@ export class SidebarComponent {
       svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 8.25l.008-.008H9.5V8.25zm0 2.25l.008-.008H9.5V10.5zm-.25 2.25H9.5V12.75zm0 2.25H9.5V15zm0 2.25H9.5v-.008h-.008v.008zm1.5-11.25h.008v-.008H11v.008zm0 2.25h.008v-.008H11V10.5zm0 2.25h.008v-.008H11V12.75zm0 2.25h.008V15H11v.25zm0 2.25h.008v-.008H11v.008zm1.5-11.25h.008v-.008h-.008v.008zm0 2.25h.008v-.008h-.008V10.5zm0 2.25h.008v-.008h-.008v.25zm0 2.25h.008V15h-.008v.25zM12 21a9.003 9.003 0 008.354-5.646 9.003 9.003 0 00-8.354-5.646V21zm0 0a9.003 9.003 0 01-8.354-5.646 9.003 9.003 0 018.354-5.646V21z" /></svg>`;
     } else if (key.includes('seller')) {
       svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0zM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>`;
+    } else if (key.includes('provider')) {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375A1.125 1.125 0 0 1 2.25 17.625V14.25m11.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9m9 9H21m-9 9v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m-9 0h4.5m0 0v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" /></svg>`;
     } else if (key.includes('purchases')) {
       svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" /></svg>`;
     } else if (key.includes('tables')) {
