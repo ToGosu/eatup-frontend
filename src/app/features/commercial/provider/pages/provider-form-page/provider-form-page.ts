@@ -14,7 +14,6 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-
 import { ENV } from '@config/env.config';
 import {
   CatalogOption,
@@ -27,7 +26,6 @@ import {
   ProvidersService,
   getProviderErrorMessage,
 } from '@commercial/provider/services/provider.service';
-
 type ProviderFormControlName =
   | 'businessName'
   | 'documentTypeId'
@@ -40,7 +38,6 @@ type ProviderFormControlName =
   | 'departmentId'
   | 'cityId'
   | 'address';
-
 @Component({
   selector: 'app-provider-form-page',
   standalone: true,
@@ -55,44 +52,37 @@ export class ProviderFormPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = new FormBuilder().nonNullable;
   private readonly lettersPattern = /^[\p{L}\s]+$/u;
-
   protected readonly isEditing = signal(false);
   protected readonly loading = signal(false);
   protected readonly submitting = signal(false);
   protected readonly formSubmitted = signal(false);
   protected readonly generalError = signal('');
   protected readonly successMessage = signal('');
-
   protected readonly documentTypes: CatalogOption[] = [
     { id: 1, label: 'NIT', shortLabel: 'NIT' },
     { id: 2, label: 'Cdula de ciudadana', shortLabel: 'CC' },
     { id: 3, label: 'Cdula de extranjera', shortLabel: 'CE' },
     { id: 4, label: 'Pasaporte', shortLabel: 'PP' },
   ];
-
   protected readonly taxRegimes: CatalogOption[] = [
     { id: 1, label: 'Rgimen comn' },
     { id: 2, label: 'Rgimen simplificado' },
     { id: 3, label: 'No responsable de IVA' },
   ];
-
   protected readonly departments: CatalogOption[] = [
     { id: 11, label: 'Bogot D.C.' },
     { id: 5, label: 'Antioquia' },
     { id: 76, label: 'Valle del Cauca' },
     { id: 8, label: 'Atlntico' },
   ];
-
   protected readonly cities: CityOption[] = [
     { id: 11001, label: 'Bogot', departmentId: 11 },
     { id: 5001, label: 'Medelln', departmentId: 5 },
     { id: 76001, label: 'Cali', departmentId: 76 },
     { id: 8001, label: 'Barranquilla', departmentId: 8 },
   ];
-
   private providerId = '';
   private loadedEmail = '';
-
   protected readonly form = this.fb.group({
     businessName: ['', [Validators.required, Validators.maxLength(150)]],
     documentTypeId: [0, [Validators.required, Validators.min(1)]],
@@ -113,7 +103,6 @@ export class ProviderFormPage implements OnInit {
     address: ['', [Validators.required, Validators.maxLength(200)]],
     branchId: [Number(ENV.locationId) || 0, [Validators.required, Validators.min(1)]],
   });
-
   protected readonly availableCities = computed(() => {
     const departmentId = this.form.controls.departmentId.value;
     if (!departmentId) {
@@ -121,11 +110,9 @@ export class ProviderFormPage implements OnInit {
     }
     return this.cities.filter((city) => city.departmentId === departmentId);
   });
-
   ngOnInit(): void {
     this.providerId = this.route.snapshot.paramMap.get('id') ?? '';
     this.isEditing.set(!!this.providerId);
-
     this.form.controls.departmentId.valueChanges.subscribe((departmentId) => {
       const cityId = this.form.controls.cityId.value;
       const stillValid = this.cities.some(
@@ -135,40 +122,32 @@ export class ProviderFormPage implements OnInit {
         this.form.controls.cityId.setValue(0);
       }
     });
-
     if (this.isEditing()) {
       this.loadProvider();
       this.form.controls.email.disable();
     }
   }
-
   protected save(): void {
     if (this.submitting()) {
       return;
     }
-
     this.formSubmitted.set(true);
     this.generalError.set('');
     this.successMessage.set('');
-
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-
     const branchId = this.form.controls.branchId.value;
     if (!branchId) {
       this.generalError.set('No hay una sede configurada para registrar el proveedor');
       return;
     }
-
     const payload = this.buildPayload();
-
     this.submitting.set(true);
     const request$ = this.isEditing()
       ? this.providerService.updateProvider(this.providerId, payload as UpdateProviderRequest)
       : this.providerService.createProvider(payload);
-
     request$
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
@@ -185,73 +164,57 @@ export class ProviderFormPage implements OnInit {
         error: (error) => this.generalError.set(getProviderErrorMessage(error)),
       });
   }
-
   protected showFieldError(controlName: ProviderFormControlName): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && (control.touched || this.formSubmitted());
   }
-
   protected fieldError(controlName: ProviderFormControlName): string {
     const control = this.form.controls[controlName];
-
     if (!this.showFieldError(controlName)) {
       return '';
     }
-
     if (control.hasError('required') || control.hasError('min')) {
       return 'Este campo es obligatorio.';
     }
-
     if (controlName === 'businessName' && control.hasError('maxlength')) {
       return 'No puede superar 150 caracteres.';
     }
-
     if (controlName === 'documentNumber') {
       return 'El documento debe tener entre 6 y 20 dgitos.';
     }
-
     if (controlName === 'responsibleFirstName' || controlName === 'responsibleLastName') {
       if (control.hasError('maxlength')) {
         return 'No puede superar 100 caracteres.';
       }
       return 'Solo se permiten letras y espacios.';
     }
-
     if (controlName === 'phone') {
       return 'El telfono debe tener exactamente 10 dgitos.';
     }
-
     if (controlName === 'email') {
       return 'Ingresa un correo electrnico vlido.';
     }
-
     if (controlName === 'address' && control.hasError('maxlength')) {
       return 'No puede superar 200 caracteres.';
     }
-
     return 'Campo no vlido.';
   }
-
   protected hasUnknownDocumentType(): boolean {
     const selected = this.form.controls.documentTypeId.value;
     return !!selected && !this.documentTypes.some((type) => type.id === selected);
   }
-
   protected hasUnknownTaxRegime(): boolean {
     const selected = this.form.controls.taxRegimeId.value;
     return !!selected && !this.taxRegimes.some((regime) => regime.id === selected);
   }
-
   protected onlyDigits(event: KeyboardEvent): void {
     if (event.key.length === 1 && !/^\d$/.test(event.key)) {
       event.preventDefault();
     }
   }
-
   private loadProvider(): void {
     this.loading.set(true);
     this.generalError.set('');
-
     this.providerService
       .getProviderById(this.providerId)
       .pipe(finalize(() => this.loading.set(false)))
@@ -260,10 +223,8 @@ export class ProviderFormPage implements OnInit {
         error: (error) => this.generalError.set(getProviderErrorMessage(error)),
       });
   }
-
   private patchForm(provider: Provider): void {
     this.loadedEmail = provider.email;
-
     this.form.patchValue({
       businessName: provider.businessName ?? '',
       documentTypeId: provider.documentTypeId ?? 0,
@@ -279,10 +240,8 @@ export class ProviderFormPage implements OnInit {
       branchId: provider.branchId || Number(ENV.locationId) || 0,
     });
   }
-
   private buildPayload(): CreateProviderRequest {
     const raw = this.form.getRawValue();
-
     return {
       businessName: raw.businessName.trim(),
       documentTypeId: raw.documentTypeId,
@@ -299,4 +258,3 @@ export class ProviderFormPage implements OnInit {
     };
   }
 }
-
