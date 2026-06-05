@@ -262,42 +262,6 @@ export class LayoutComponent {
     }
   }
       
-  protected readonly modules = signal([
-    {
-      name: 'Payment',
-      expanded: false,
-      features: [
-        { name: 'Cash Receipt',   path: '/payment/cashreceipt' },
-        { name: 'Facturas',       path: '/payment/invoice' },
-        { name: 'Payment Method', path: '/payment/paymentmethod' }
-      ]
-    },
-    {
-      name: 'Commercial',
-      expanded: false,
-      features: [
-        { name: 'Descuentos', path: '/commercial/discount' },
-        { name: 'Descuentos por Cliente', path: '/commercial/customer-discount' },
-        { name: 'Vendedores', path: '/commercial/seller' },
-        { name: 'Compras',    path: '/commercial/purchases' },
-        { name: 'Proveedores', path: '/commercial/provider' },
-        { name: 'Mesas',      path: '/commercial/tables' },
-        { name: 'Ventas',     path: '/commercial/sales' }
-      ]
-    },
-    {
-      name: 'Inventory',
-      expanded: true,
-      features: [
-        { name: 'Transfer',   path: '/inventory/transfer'   },
-        { name: 'Categorías', path: '/inventory/categories' },
-        { name: 'Productos',  path: '/inventory/product'    },
-        { name: 'Recetas',    path: '/inventory/recipes'    },
-        { name: 'Sedes',      path: '/inventor/locations' }
-      ]
-    }
-  ]);
-
   closeMobileSidebar(): void {
     this.isMobileSidebarOpen.set(false);
   }

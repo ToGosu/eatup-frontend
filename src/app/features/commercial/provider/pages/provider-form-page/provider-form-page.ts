@@ -111,7 +111,7 @@ export class ProviderFormPage implements OnInit {
     departmentId: [0, [Validators.required, Validators.min(1)]],
     cityId: [0, [Validators.required, Validators.min(1)]],
     address: ['', [Validators.required, Validators.maxLength(200)]],
-    branchId: [Number(ENV.locationId) || 0, [Validators.required, Validators.min(1)]],
+    branchId: [ENV.locationId || '', [Validators.required, Validators.minLength(1)]],
   });
 
   protected readonly availableCities = computed(() => {
@@ -276,7 +276,7 @@ export class ProviderFormPage implements OnInit {
       departmentId: provider.departmentId ?? 0,
       cityId: provider.cityId ?? 0,
       address: provider.address ?? '',
-      branchId: provider.branchId || Number(ENV.locationId) || 0,
+      branchId: provider.branchId || ENV.locationId || '',
     });
   }
 
@@ -299,3 +299,4 @@ export class ProviderFormPage implements OnInit {
     };
   }
 }
+        

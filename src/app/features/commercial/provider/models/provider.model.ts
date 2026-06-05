@@ -13,7 +13,7 @@ export interface Provider {
   departmentId: number;
   cityId: number;
   address: string;
-  branchId: number;
+  branchId: string;
   status: ProviderStatus;
   createdDate?: string;
   modifiedDate?: string;
@@ -31,7 +31,7 @@ export interface CreateProviderRequest {
   departmentId: number;
   cityId: number;
   address: string;
-  branchId: number;
+  branchId: string;
 }
 
 export type UpdateProviderRequest = CreateProviderRequest;
